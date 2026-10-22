@@ -1,0 +1,54 @@
+name: CD
+ 
+on:
+  push:
+    tags: ['rc-*', 'v*']
+ 
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+ 
+defaults:
+  run:
+    working-directory: dab_demo
+ 
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag must point to a commit on main
+        run: |
+          git fetch origin main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "OK: $GITHUB_REF_NAME is on main"
+          else
+            echo "::error::Tag $GITHUB_REF_NAME is not on main. Deployment blocked."
+            exit 1
+          fi
+ 
+  deploy-qa:
+    needs: guard
+    if: startsWith(github.ref, 'refs/tags/rc-')
+    runs-on: ubuntu-latest
+    environment: qa
+    concurrency: deploy-qa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t qa
+      - run: databricks bundle run -t qa demo_etl
+ 
+  deploy-prod:
+    needs: guard
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: prod
+    concurrency: deploy-prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t prod
+      - run: databricks bundle run -t prod demo_etl
