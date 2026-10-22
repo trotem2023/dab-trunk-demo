@@ -1,0 +1,19 @@
+resources:
+  jobs:
+    demo_etl:
+      name: demo_etl_${bundle.target}
+      tags:
+        version: ${var.version}
+      tasks:
+        - task_key: build_table
+          notebook_task:
+            notebook_path: ../src/build_table.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              env: ${bundle.target}
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: Asia/Jerusalem
+        pause_status: PAUSED
+ 

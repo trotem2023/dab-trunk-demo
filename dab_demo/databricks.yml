@@ -1,0 +1,44 @@
+bundle:
+  name: dab_demo
+ 
+include:
+  - resources/*.yml
+ 
+variables:
+  catalog:
+    description: Target catalog
+    default: workspace
+  schema:
+    description: Target schema
+  version:
+    description: Release tag (set by cd.yml)
+    default: local
+ 
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-2362923a-48f8.cloud.databricks.com
+    variables:
+      schema: dab_demo_${workspace.current_user.short_name}
+ 
+  qa:
+    mode: production
+    workspace:
+      host: https://dbc-2362923a-48f8.cloud.databricks.com
+      root_path: /Users/tomerrot@gmail.com/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: tomerrot@gmail.com
+    variables:
+      schema: demo_qa
+ 
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-2362923a-48f8.cloud.databricks.com
+      root_path: /Users/tomerrot@gmail.com/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: tomerrot@gmail.com
+    variables:
+      schema: demo_prod
